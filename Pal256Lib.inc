@@ -3,12 +3,15 @@
 ' 2021 by nautilus
 '
 ' version: 0.1: tested on firmware 5.06
+'          0.2: found a bug in the fading subs
+'          0.3: global variable FadingStep%, to change the speed of fading effects
 '
 ' in main program you have to set
 ' option base 0
 
 
 dim myCLUT%(256)    'colour lookup table
+dim FadingStep% = 2 'change the speed of fading effects, sensible values are 1 .. 6, default is 2
 
 'recreate the CMM2 8bit sytem palette into myCLUT% (FM 5.06)
 sub LoadSystemPalette
@@ -45,34 +48,36 @@ end sub
 
 sub FadeInPalette
   local r%, g%, b%, i%, j%
-  for j%= 128 to 0 step -1 
+  for j%= 255 to 0 step (-1 * FadingStep%)
     for i% = 0 to 255
-      r% = (map(i%) and &Hff0000) \ 65536 - j% * 2
+      r% = (myCLUT%(i%) and &Hff0000) \ 65536 - j%
       if r% < 0 then r% = 0
-      g% = (map(i%) and &H00ff00) \ 256 - j% * 2
+      g% = (myCLUT%(i%) and &H00ff00) \ 256 - j%
       if g% < 0 then g% = 0
-      b% = (map(i%) and &HFF) - j% * 2
+      b% = (myCLUT%(i%) and &HFF) - j%
       if b% < 0 then b% = 0
       map(i%) = rgb(r%, g%, b%)
     next i%
     map set
   next j%
+  SetPalette
 end sub
 
 sub FadeOutPalette
   local r%, g%, b%, i%, j%
-  for j%= 0 to 128 
+  for j%= 0 to 255 step FadingStep%
     for i% = 0 to 255
-      r% = (map(i%) and &Hff0000) \ 65536 - j% * 2
+      r% = (myCLUT%(i%) and &Hff0000) \ 65536 - j%
       if r% < 0 then r% = 0
-      g% = (map(i%) and &H00ff00) \ 256 - j% * 2
+      g% = (myCLUT%(i%) and &H00ff00) \ 256 - j%
       if g% < 0 then g% = 0
-      b% = (map(i%) and &HFF) - j% * 2
+      b% = (myCLUT%(i%) and &HFF) - j% 
       if b% < 0 then b% = 0
       map(i%) = rgb(r%, g%, b%)
     next i%
     map set
   next j%
+  SetPaletteToBlack
 end sub
 
 sub Grayscale
